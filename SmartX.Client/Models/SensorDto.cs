@@ -17,3 +17,11 @@ public class AnomalyCellDto
     public string Colour { get; set; } = "Grey";
     public DateTime Timestamp { get; set; }
 }
+
+public class SensorSummaryDto
+{
+    public int TotalSensors { get; set; }
+    public int OnlineSensors { get; set; }
+    public int TotalTelemetryLogs { get; set; }
+    public Dictionary<string, int> ByCategory { get; set; } = new();
+}
