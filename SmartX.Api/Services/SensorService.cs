@@ -34,4 +34,18 @@ public class SensorService
         await _db.SaveChangesAsync();
         return sensor;
     }
+
+    public async Task<object> GetSummaryAsync()
+{
+    var sensors = await _db.Sensors.AsNoTracking().ToListAsync();
+    var telemetryCount = await _db.TelemetryLogs.CountAsync();
+
+    return new
+    {
+        totalSensors = sensors.Count,
+        onlineSensors = sensors.Count(s => s.Status == "Online"),
+        totalTelemetryLogs = telemetryCount,
+        byCategory = sensors.GroupBy(s => s.Category).ToDictionary(g => g.Key, g => g.Count())
+    };
+}
 }
