@@ -18,5 +18,8 @@ public class PowerReading : IComparable<PowerReading>, IEquatable<PowerReading>
     public static PowerReading operator -(PowerReading a, PowerReading b)
         => new($"{a.DeviceId}-{b.DeviceId}", Math.Abs(a.Watts - b.Watts));
 
-
+    public static bool operator >(PowerReading a, PowerReading b) => a.Watts > b.Watts;
+    public static bool operator <(PowerReading a, PowerReading b) => a.Watts < b.Watts;
+    public static bool operator >=(PowerReading a, PowerReading b) => a.Watts >= b.Watts;
+    public static bool operator <=(PowerReading a, PowerReading b) => a.Watts <= b.Watts;
 }
