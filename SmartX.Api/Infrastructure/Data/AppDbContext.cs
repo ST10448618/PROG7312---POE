@@ -11,6 +11,7 @@ public class AppDbContext : DbContext
     public DbSet<SensorFile> SensorFiles => Set<SensorFile>();
     public DbSet<TelemetryLog> TelemetryLogs => Set<TelemetryLog>();
     public DbSet<AnomalyLog> AnomalyLogs => Set<AnomalyLog>();
+    public DbSet<IntegrationEndpoint> Integrations => Set<IntegrationEndpoint>();
         protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<SensorProfile>()
