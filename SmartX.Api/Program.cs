@@ -27,6 +27,10 @@ builder.Services.AddSignalR().AddJsonProtocol(options =>
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IntegrationService>();
+builder.Services.AddScoped<IntegrationDispatchService>();
+builder.Services.AddScoped<AnomalyLogService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks()

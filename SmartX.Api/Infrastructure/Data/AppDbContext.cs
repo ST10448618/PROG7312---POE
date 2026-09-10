@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<TelemetryLog> TelemetryLogs => Set<TelemetryLog>();
     public DbSet<AnomalyLog> AnomalyLogs => Set<AnomalyLog>();
     public DbSet<IntegrationEndpoint> Integrations => Set<IntegrationEndpoint>();
+    public record RegisterIntegrationRequest(string Name, string WebhookUrl);
         protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<SensorProfile>()
