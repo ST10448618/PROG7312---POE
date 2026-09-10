@@ -24,6 +24,15 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddSignalR().AddJsonProtocol(options =>
     options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("Default")!);
+
+var clientOrigin = builder.Configuration["ClientOrigin"] ?? "http://localhost:8081";
+builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
+    p.WithOrigins(clientOrigin).AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
