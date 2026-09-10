@@ -1,0 +1,37 @@
+using Microsoft.EntityFrameworkCore;
+using SmartX.Api.Domain.Entities;
+using SmartX.Api.Infrastructure.Data;
+
+namespace SmartX.Api.Services;
+
+public class SensorService
+{
+    private readonly AppDbContext _db;
+    public SensorService(AppDbContext db) => _db = db;
+
+    public async Task<SensorProfile> RegisterAsync(string mac, string location, string category)
+    {
+        if (string.IsNullOrWhiteSpace(mac))
+            throw new ArgumentException("MAC address is required.");
+
+        if (await _db.Sensors.AnyAsync(s => s.MacAddress == mac))
+            throw new InvalidOperationException($"Sensor '{mac}' is already registered.");
+
+        var sensor = new SensorProfile { MacAddress = mac, Location = location, Category = category };
+        _db.Sensors.Add(sensor);
+        await _db.SaveChangesAsync();
+        return sensor;
+    }
+
+    public Task<List<SensorProfile>> GetAllAsync() =>
+        _db.Sensors.Include(s => s.Files).AsNoTracking().ToListAsync();
+
+    public async Task<SensorProfile> UpdateStatusAsync(string mac, string status)
+    {
+        var sensor = await _db.Sensors.FirstOrDefaultAsync(s => s.MacAddress == mac)
+            ?? throw new KeyNotFoundException($"Sensor '{mac}' not found.");
+        sensor.Status = status;
+        await _db.SaveChangesAsync();
+        return sensor;
+    }
+}
