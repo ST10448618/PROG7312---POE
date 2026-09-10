@@ -1,0 +1,75 @@
+@using Microsoft.AspNetCore.SignalR.Client
+@using SmartX.Client.Models
+@implements IAsyncDisposable
+@inject NavigationManager Nav
+
+<div class="heatmap-panel">
+    <h3>Anomaly Heat Map</h3>
+    <p class="heatmap-legend">
+        <span class="swatch grey"></span> Normal
+        <span class="swatch red"></span> Anomaly
+        <span class="swatch green"></span> Recovering
+        <span class="swatch blue"></span> Disconnected
+    </p>
+
+    <div class="heatmap-grid">
+        @foreach (var sensorId in _rows)
+        {
+            <div class="heatmap-row">
+                <span class="row-label">@sensorId</span>
+                <div class="cell-track">
+                    @foreach (var cell in _cellsBySensor[sensorId])
+                    {
+                        <div class="heat-cell @ColourClass(cell.Colour)"
+                             title="@($"{cell.Value:0.0} (score {cell.Score})")"></div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private HubConnection? _hub;
+    private readonly List<string> _rows = new();
+    private readonly Dictionary<string, List<AnomalyCellDto>> _cellsBySensor = new();
+    private const int MaxCellsPerRow = 30;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _hub = new HubConnectionBuilder()
+            .WithUrl(Nav.ToAbsoluteUri("/hubs/telemetry"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        _hub.On<AnomalyCellDto>("AnomalyUpdate", async cell =>
+        {
+            if (!_cellsBySensor.ContainsKey(cell.SensorId))
+            {
+                _cellsBySensor[cell.SensorId] = new List<AnomalyCellDto>();
+                _rows.Add(cell.SensorId);
+            }
+
+            var row = _cellsBySensor[cell.SensorId];
+            row.Add(cell);
+            if (row.Count > MaxCellsPerRow) row.RemoveAt(0);
+
+            await InvokeAsync(StateHasChanged);
+        });
+
+        await _hub.StartAsync();
+    }
+
+    private static string ColourClass(string colour) => colour.ToLower() switch
+    {
+        "red" => "red",
+        "green" => "green",
+        "blue" => "blue",
+        _ => "grey"
+    };
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_hub is not null) await _hub.DisposeAsync();
+    }
+}
