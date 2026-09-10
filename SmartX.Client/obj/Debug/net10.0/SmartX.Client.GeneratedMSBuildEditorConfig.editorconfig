@@ -45,12 +45,12 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSG9tZS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/perez/VSCodeProjects/SmartX/SmartX.Client/Pages/NotFound.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTm90Rm91bmQucmF6b3I=
+[C:/Users/perez/VSCodeProjects/SmartX/SmartX.Client/Pages/Ingestion.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSW5nZXN0aW9uLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/perez/VSCodeProjects/SmartX/SmartX.Client/Pages/Weather.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcV2VhdGhlci5yYXpvcg==
+[C:/Users/perez/VSCodeProjects/SmartX/SmartX.Client/Pages/NotFound.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTm90Rm91bmQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/perez/VSCodeProjects/SmartX/SmartX.Client/_Imports.razor]

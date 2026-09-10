@@ -1,0 +1,102 @@
+@page "/ingestion"
+@using System.Net.Http.Json
+@using SmartX.Client.Models
+@using SmartX.Client.Services
+@inject SensorApiClient Api
+
+<h1>Sensor Data Ingestion</h1>
+
+<EditForm Model="_newSensor" OnValidSubmit="RegisterSensor">
+    <div class="form-grid">
+        <label>MAC Address
+            <InputText @bind-Value="_newSensor.MacAddress" placeholder="AA:BB:CC:00:11:22" />
+        </label>
+        <label>Deployment Location
+            <InputText @bind-Value="_newSensor.Location" placeholder="Facility A/Zone 1/Sub-Zone B/Rack 1" />
+        </label>
+        <label>Category
+            <InputSelect @bind-Value="_newSensor.Category">
+                <option value="Environmental">Environmental</option>
+                <option value="Power Consumption">Power Consumption</option>
+                <option value="Actuator">Actuator</option>
+            </InputSelect>
+        </label>
+    </div>
+    <button type="submit">Register sensor</button>
+</EditForm>
+
+@if (!string.IsNullOrEmpty(_statusMessage))
+{
+    <p class="status">@_statusMessage</p>
+}
+
+<h2>Registered Sensors</h2>
+<div class="sensor-list">
+    @foreach (var s in _sensors)
+    {
+        <div class="sensor-row">
+            <span class="mac">@s.MacAddress</span>
+            <span>@s.Location</span>
+            <span>@s.Category</span>
+            <span class="status-@s.Status.ToLower()">@s.Status</span>
+            <InputFile OnChange="e => UploadFile(e, s.MacAddress)" />
+            <button @onclick="() => SimulateReading(s.MacAddress)">Simulate reading</button>
+        </div>
+    }
+</div>
+
+<h2>Deployment Path Validator (Recursion)</h2>
+<input @bind="_pathToValidate" placeholder="Facility A/Zone 1/Sub-Zone B/Rack 1" />
+<button @onclick="ValidatePath">Validate</button>
+@if (_pathResult is not null)
+{
+    <p>Valid: @_pathResult</p>
+}
+
+@code {
+    private SensorDto _newSensor = new();
+    private List<SensorDto> _sensors = new();
+    private string _statusMessage = "";
+    private string _pathToValidate = "";
+    private bool? _pathResult;
+    private readonly Random _rnd = new();
+
+    protected override async Task OnInitializedAsync() => await RefreshSensors();
+
+    private async Task RefreshSensors() => _sensors = await Api.GetSensorsAsync() ?? new();
+
+    private async Task RegisterSensor()
+    {
+        var response = await Api.RegisterAsync(_newSensor);
+        _statusMessage = response.IsSuccessStatusCode
+            ? $"Registered {_newSensor.MacAddress}."
+            : "Registration failed — check the MAC address.";
+        _newSensor = new();
+        await RefreshSensors();
+    }
+
+    private async Task UploadFile(InputFileChangeEventArgs e, string mac)
+    {
+        var file = e.File;
+        using var content = new MultipartFormDataContent();
+        var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+        content.Add(new StreamContent(stream), "file", file.Name);
+        await Api.UploadFileAsync(mac, content);
+        await RefreshSensors();
+    }
+
+    private async Task SimulateReading(string mac)
+    {
+        var value = (float)Math.Round(_rnd.NextDouble() * 100, 2);
+        await Api.PushMoistureAsync(mac, value);
+    }
+
+    private async Task ValidatePath()
+    {
+        var result = await Api.ValidatePathAsync(_pathToValidate);
+        var body = await result.Content.ReadFromJsonAsync<ValidationResult>();
+        _pathResult = body?.isValid;
+    }
+
+    private record ValidationResult(string path, bool isValid);
+}
