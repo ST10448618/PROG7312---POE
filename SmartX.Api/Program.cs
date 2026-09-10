@@ -31,6 +31,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddScoped<IntegrationService>();
 builder.Services.AddScoped<IntegrationDispatchService>();
 builder.Services.AddScoped<AnomalyLogService>();
+builder.Services.AddSingleton<ConnectionTracker>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks()
@@ -73,5 +74,8 @@ app.MapTelemetryEndpoints();
 app.MapPowerEndpoints();
 app.MapDeploymentEndpoints();
 app.MapHub<TelemetryHub>("/hubs/telemetry");
+app.MapAnomalyLogEndpoints();
+app.MapIntegrationEndpoints();
+app.MapSystemHealthEndpoints();
 
 app.Run();
