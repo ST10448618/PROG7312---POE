@@ -1,14 +1,28 @@
 using Microsoft.EntityFrameworkCore;
+using Serilog;
+using System.Text.Json.Serialization;
+using SmartX.Api.Domain.Collections;
+using SmartX.Api.Endpoints;
+using SmartX.Api.Hubs;
 using SmartX.Api.Infrastructure.Data;
+using SmartX.Api.Infrastructure.FileStorage;
+using SmartX.Api.Infrastructure.Seeding;
+using SmartX.Api.Middleware;
+using SmartX.Api.Services;
+
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .Enrich.FromLogContext()
+    .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Host.UseSerilog();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+
+builder.Services.AddSignalR().AddJsonProtocol(options =>
+    options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 var app = builder.Build();
 
