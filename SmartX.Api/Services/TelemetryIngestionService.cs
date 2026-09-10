@@ -13,14 +13,17 @@ public class TelemetryIngestionService
     private readonly AnomalyDetectionService _anomaly;
     private readonly TelemetryBatchStore _batches;
     private readonly IHubContext<TelemetryHub> _hub;
+    private readonly IntegrationDispatchService _dispatch;
 
     public TelemetryIngestionService(
-        AppDbContext db, AnomalyDetectionService anomaly, TelemetryBatchStore batches, IHubContext<TelemetryHub> hub)
+        AppDbContext db, AnomalyDetectionService anomaly, TelemetryBatchStore batches,
+        IHubContext<TelemetryHub> hub, IntegrationDispatchService dispatch)
     {
         _db = db;
         _anomaly = anomaly;
         _batches = batches;
         _hub = hub;
+        _dispatch = dispatch;
     }
 
     public async Task<AnomalyResult> IngestAsync<T>(TelemetryPacket<T> packet) where T : struct
@@ -33,12 +36,29 @@ public class TelemetryIngestionService
             Unit = packet.Unit,
             Timestamp = packet.Timestamp
         });
-        await _db.SaveChangesAsync();
 
         _batches.Append(packet.SensorId, packet.NumericValue, packet.Timestamp);
-
         var result = _anomaly.Score(packet.SensorId, packet.NumericValue);
+        var severity = AnomalyDetectionService.SeverityFor(result.Colour);
+
+        _db.AnomalyLogs.Add(new AnomalyLog
+        {
+            SensorId = packet.SensorId,
+            Value = result.Value,
+            Score = result.Score,
+            Colour = result.Colour.ToString(),
+            Severity = severity,
+            Timestamp = result.Timestamp
+        });
+
+        await _db.SaveChangesAsync();
+
         await _hub.Clients.All.SendAsync("AnomalyUpdate", result);
+        await _hub.Clients.All.SendAsync("TelemetryIngested", new { packet.SensorId, packet.Timestamp, Value = packet.NumericValue });
+
+        if (severity == "Critical")
+            await _dispatch.NotifyAllAsync(packet.SensorId, result.Value, result.Score);
+
         return result;
     }
 }
