@@ -42,4 +42,11 @@ public class AnomalyDetectionService
 
         return new AnomalyResult(sensorId, value, Math.Round(score, 2), colour, DateTime.UtcNow);
     }
+
+    public static string SeverityFor(AnomalyColour colour) => colour switch
+    {
+        AnomalyColour.Red => "Critical",
+        AnomalyColour.Blue => "Warning",
+        _ => "Normal"
+    };
 }
