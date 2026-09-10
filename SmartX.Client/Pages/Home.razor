@@ -1,24 +1,102 @@
 ﻿@page "/"
+@using SmartX.Client.Models
+@using SmartX.Client.Services
+@inject SensorApiClient Api
 
-<div class="landing">
-    <h1>Smart-X Gateway</h1>
-    <p class="subtitle">Distributed telemetry, command, and mesh routing for edge deployments.</p>
+<div class="mb-8">
+    <h1 class="text-2xl font-semibold text-slate-100">Welcome to Smart-X Telemetry</h1>
+    <p class="text-slate-400 mt-1">@DateTime.Now.ToString("dddd, dd MMMM yyyy") · @(_health is null ? "loading system status…" : _health.DbConnected ? "All systems operational" : "Database unreachable")</p>
+</div>
 
-    <div class="pillar-grid">
-        <a class="pillar active" href="/ingestion">
-            <span class="pillar-index">01</span>
-            <h2>Sensor Data Ingestion &amp; Telemetry</h2>
-            <p>Register devices, push readings, attach configs and logs.</p>
-        </a>
-        <div class="pillar disabled">
-            <span class="pillar-index">02</span>
-            <h2>Real-Time Command Stream &amp; History</h2>
-            <p>Coming in Part 2 — queues, priority alerts, undo history.</p>
+@if (_summary is not null && _health is not null)
+{
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="card">
+            <p class="text-sm text-slate-400">Total Nodes</p>
+            <p class="text-3xl font-semibold mt-1">@_summary.TotalSensors</p>
         </div>
-        <div class="pillar disabled">
-            <span class="pillar-index">03</span>
-            <h2>Network Topology &amp; Mesh Routing</h2>
-            <p>Coming in the final PoE — graphs and routing trees.</p>
+        <div class="card">
+            <p class="text-sm text-slate-400">Active Alerts (24h)</p>
+            <p class="text-3xl font-semibold mt-1 text-rose-400">@_health.CriticalAnomaliesLast24h</p>
+        </div>
+        <div class="card">
+            <div class="flex items-center gap-2">
+                <p class="text-sm text-slate-400">System Uptime</p>
+                <span class="relative flex h-1.5 w-1.5">
+                    <span class="animate-pulse-slow absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-60"></span>
+                    <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                </span>
+            </div>
+            <p class="text-3xl font-semibold mt-1">@FormatUptime(_health.UptimeSeconds)</p>
+        </div>
+        <div class="card">
+            <p class="text-sm text-slate-400">Telemetry Readings</p>
+            <p class="text-3xl font-semibold mt-1">@_summary.TotalTelemetryLogs</p>
         </div>
     </div>
+}
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <a href="/dashboard" class="card hover:border-slate-700 transition-colors">
+        <p class="font-medium text-slate-100">Overview Dashboard →</p>
+        <p class="text-sm text-slate-400 mt-1">Live anomaly heat map across all sensors.</p>
+    </a>
+    <a href="/ingestion" class="card hover:border-slate-700 transition-colors">
+        <p class="font-medium text-slate-100">Data Ingestion →</p>
+        <p class="text-sm text-slate-400 mt-1">Register devices and monitor the pipeline.</p>
+    </a>
+    <a href="/integrations" class="card hover:border-slate-700 transition-colors">
+        <p class="font-medium text-slate-100">Integration →</p>
+        <p class="text-sm text-slate-400 mt-1">Connect webhook notifications.</p>
+    </a>
 </div>
+
+<div class="card">
+    <h3 class="font-medium text-slate-100 mb-4">Recent Activity</h3>
+    @if (_recent is null || _recent.Count == 0)
+    {
+        <p class="text-sm text-slate-400">No telemetry yet.</p>
+    }
+    else
+    {
+        <ul class="divide-y divide-slate-800">
+            @for (var i = 0; i < _recent.Count; i++)
+            {
+                var item = _recent[i];
+                <li class="py-2.5 flex items-center justify-between text-sm">
+                    <span class="flex items-center gap-2">
+                        @if (i == 0)
+                        {
+                            <span class="relative flex h-1.5 w-1.5">
+                                <span class="animate-pulse-slow absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-60"></span>
+                                <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                            </span>
+                        }
+                        <span class="font-mono text-slate-300">@item.SensorId</span>
+                        <span class="text-slate-500">sent @item.RawValue@item.Unit</span>
+                    </span>
+                    <span class="text-slate-500">@item.Timestamp.ToLocalTime().ToString("HH:mm:ss")</span>
+                </li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    private SensorSummaryDto? _summary;
+    private SystemHealthDto? _health;
+    private List<TelemetryLogDto>? _recent;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _summary = await Api.GetSummaryAsync();
+        _health = await Api.GetHealthSummaryAsync();
+        _recent = await Api.GetRecentTelemetryAsync();
+    }
+
+    private static string FormatUptime(double seconds)
+    {
+        var ts = TimeSpan.FromSeconds(seconds);
+        return ts.TotalHours >= 1 ? $"{(int)ts.TotalHours}h {ts.Minutes}m" : $"{ts.Minutes}m {ts.Seconds}s";
+    }
+}

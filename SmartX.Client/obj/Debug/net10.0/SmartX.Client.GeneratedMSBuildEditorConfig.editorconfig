@@ -37,8 +37,16 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = RmVhdHVyZXNcQW5vbWFseUhlYXRNYXBcQW5vbWFseUhlYXRNYXAucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/perez/VSCodeProjects/SmartX/SmartX.Client/Pages/AnomalyLogs.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQW5vbWFseUxvZ3MucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/perez/VSCodeProjects/SmartX/SmartX.Client/Pages/Counter.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ291bnRlci5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/perez/VSCodeProjects/SmartX/SmartX.Client/Pages/Dashboard.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGFzaGJvYXJkLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/perez/VSCodeProjects/SmartX/SmartX.Client/Pages/Home.razor]
@@ -49,8 +57,16 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSW5nZXN0aW9uLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/perez/VSCodeProjects/SmartX/SmartX.Client/Pages/Integration.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSW50ZWdyYXRpb24ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/perez/VSCodeProjects/SmartX/SmartX.Client/Pages/NotFound.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTm90Rm91bmQucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/perez/VSCodeProjects/SmartX/SmartX.Client/Pages/SystemHealth.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3lzdGVtSGVhbHRoLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/perez/VSCodeProjects/SmartX/SmartX.Client/_Imports.razor]
@@ -60,7 +76,3 @@ build_metadata.AdditionalFiles.CssScope =
 [C:/Users/perez/VSCodeProjects/SmartX/SmartX.Client/Layout/MainLayout.razor]
 build_metadata.AdditionalFiles.TargetPath = TGF5b3V0XE1haW5MYXlvdXQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = b-qaqyvyrtn7
-
-[C:/Users/perez/VSCodeProjects/SmartX/SmartX.Client/Layout/NavMenu.razor]
-build_metadata.AdditionalFiles.TargetPath = TGF5b3V0XE5hdk1lbnUucmF6b3I=
-build_metadata.AdditionalFiles.CssScope = b-yjavkznooc

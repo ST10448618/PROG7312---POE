@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@layer components {
+    .nav-tab {
+        @apply px-3 py-1.5 rounded-md text-sm text-slate-400 hover:text-slate-100 hover:bg-slate-900 transition-colors duration-150;
+    }
+
+    .nav-tab.active {
+        @apply text-slate-100 bg-slate-900;
+    }
+
+    .card {
+        @apply bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm;
+    }
+
+    .badge-emerald {
+        @apply text-emerald-400 bg-emerald-950/60 border border-emerald-900 rounded-full px-2.5 py-0.5 text-xs font-medium;
+    }
+
+    .badge-amber {
+        @apply text-amber-400 bg-amber-950/60 border border-amber-900 rounded-full px-2.5 py-0.5 text-xs font-medium;
+    }
+
+    .badge-rose {
+        @apply text-rose-400 bg-rose-950/60 border border-rose-900 rounded-full px-2.5 py-0.5 text-xs font-medium;
+    }
+
+    .badge-slate {
+        @apply text-slate-400 bg-slate-800/60 border border-slate-700 rounded-full px-2.5 py-0.5 text-xs font-medium;
+    }
+}

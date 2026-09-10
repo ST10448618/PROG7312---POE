@@ -1,0 +1,83 @@
+@page "/integrations"
+@using SmartX.Client.Models
+@using SmartX.Client.Services
+@inject SensorApiClient Api
+
+<h1 class="text-xl font-semibold mb-6">Integration</h1>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    @if (_integrations is not null)
+    {
+        @foreach (var i in _integrations)
+        {
+            <div class="card">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="font-medium">@i.Name</span>
+                    <span class="flex items-center gap-1.5 @StatusBadge(i.Status)">
+                        @if (i.Status == "Connected")
+                        {
+                            <span class="relative flex h-1.5 w-1.5">
+                                <span class="animate-pulse-slow absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-60"></span>
+                                <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                            </span>
+                        }
+                        @i.Status
+                    </span>
+                </div>
+                <p class="text-xs text-slate-500 font-mono truncate mb-2">@i.WebhookUrl</p>
+                <p class="text-xs text-slate-500 mb-4">Last sync: @(i.LastSyncAt?.ToLocalTime().ToString("dd MMM HH:mm") ?? "never")</p>
+                <div class="flex gap-2">
+                    <button class="nav-tab bg-slate-800 flex-1" @onclick="() => Test(i.Id)">Test connection</button>
+                    <button class="nav-tab bg-slate-800 flex-1" @onclick="() => Disconnect(i.Id)">Disconnect</button>
+                </div>
+            </div>
+        }
+    }
+
+    <button class="card border-dashed flex items-center justify-center text-slate-500 hover:text-slate-300 hover:border-slate-700" @onclick="() => _showModal = true">
+        + Add New Integration
+    </button>
+</div>
+
+@if (_showModal)
+{
+    <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-20">
+        <div class="card w-96">
+            <h3 class="font-medium mb-4">New Integration</h3>
+            <input @bind="_newName" placeholder="Name (e.g. Slack Alerts)" class="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 mb-3 text-sm" />
+            <input @bind="_newUrl" placeholder="Webhook URL" class="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 mb-4 text-sm" />
+            <div class="flex gap-2 justify-end">
+                <button class="nav-tab bg-slate-800" @onclick="() => _showModal = false">Cancel</button>
+                <button class="bg-emerald-600 hover:bg-emerald-500 text-white rounded-md px-4 py-1.5 text-sm" @onclick="Register">Add</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<IntegrationDto>? _integrations;
+    private bool _showModal;
+    private string _newName = "";
+    private string _newUrl = "";
+
+    protected override async Task OnInitializedAsync() => await Load();
+    private async Task Load() => _integrations = await Api.GetIntegrationsAsync();
+
+    private async Task Register()
+    {
+        await Api.RegisterIntegrationAsync(_newName, _newUrl);
+        _showModal = false;
+        _newName = ""; _newUrl = "";
+        await Load();
+    }
+
+    private async Task Test(int id) { await Api.TestIntegrationAsync(id); await Load(); }
+    private async Task Disconnect(int id) { await Api.DisconnectIntegrationAsync(id); await Load(); }
+
+    private static string StatusBadge(string status) => status switch
+    {
+        "Connected" => "badge-emerald",
+        "Pending" => "badge-amber",
+        _ => "badge-rose"
+    };
+}

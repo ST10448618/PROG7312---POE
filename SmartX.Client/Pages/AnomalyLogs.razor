@@ -1,0 +1,85 @@
+@page "/anomalies"
+@using SmartX.Client.Models
+@using SmartX.Client.Services
+@inject SensorApiClient Api
+
+<h1 class="text-xl font-semibold mb-6">Anomaly Logs</h1>
+
+<div class="flex gap-3 mb-4">
+    <input @bind="_search" @bind:event="oninput" placeholder="Search sensor ID…" class="bg-slate-900 border border-slate-800 rounded-md px-3 py-1.5 text-sm flex-1" />
+    <select @bind="_severity" class="bg-slate-900 border border-slate-800 rounded-md px-3 py-1.5 text-sm">
+        <option value="All">All severities</option>
+        <option value="Critical">Critical</option>
+        <option value="Warning">Warning</option>
+        <option value="Normal">Normal</option>
+    </select>
+    <button class="nav-tab bg-slate-900" @onclick="Load">Filter</button>
+</div>
+
+<div class="card overflow-x-auto">
+    <table class="w-full text-sm">
+        <thead>
+            <tr class="text-left text-slate-400 border-b border-slate-800">
+                <th class="pb-2 font-medium">Timestamp</th>
+                <th class="pb-2 font-medium">Sensor ID</th>
+                <th class="pb-2 font-medium">Severity</th>
+                <th class="pb-2 font-medium">Status</th>
+                <th class="pb-2 font-medium">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (_logs is not null)
+            {
+                @for (var i = 0; i < _logs.Count; i++)
+                {
+                    var log = _logs[i];
+                    <tr class="@(i % 2 == 0 ? "bg-slate-950" : "bg-slate-900/40") hover:bg-slate-800/50">
+                        <td class="py-2.5 text-slate-400">@log.Timestamp.ToLocalTime().ToString("HH:mm:ss")</td>
+                        <td class="py-2.5 font-mono">@log.SensorId</td>
+                        <td class="py-2.5"><span class="@SeverityBadge(log.Severity)">@log.Severity</span></td>
+                        <td class="py-2.5">
+                            <span class="flex items-center gap-1.5">
+                                @if (!log.Acknowledged)
+                                {
+                                    <span class="relative flex h-1.5 w-1.5">
+                                        <span class="animate-pulse-slow absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-60"></span>
+                                        <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
+                                    </span>
+                                }
+                                @(log.Acknowledged ? "Acknowledged" : "Unresolved")
+                            </span>
+                        </td>
+                        <td class="py-2.5">
+                            @if (!log.Acknowledged)
+                            {
+                                <button class="text-xs text-emerald-400 hover:underline" @onclick="() => Acknowledge(log.Id)">Acknowledge</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private List<AnomalyLogDto>? _logs;
+    private string _search = "";
+    private string _severity = "All";
+
+    protected override async Task OnInitializedAsync() => await Load();
+    private async Task Load() => _logs = await Api.GetAnomalyLogsAsync(_severity, _search);
+
+    private async Task Acknowledge(int id)
+    {
+        await Api.AcknowledgeAnomalyAsync(id);
+        await Load();
+    }
+
+    private static string SeverityBadge(string severity) => severity switch
+    {
+        "Critical" => "badge-rose",
+        "Warning" => "badge-amber",
+        _ => "badge-emerald"
+    };
+}

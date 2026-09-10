@@ -3,31 +3,40 @@
 @implements IAsyncDisposable
 @inject NavigationManager Nav
 
-<div class="heatmap-panel">
-    <h3>Anomaly Heat Map</h3>
-    <p class="heatmap-legend">
-        <span class="swatch grey"></span> Normal
-        <span class="swatch red"></span> Anomaly
-        <span class="swatch green"></span> Recovering
-        <span class="swatch blue"></span> Disconnected
-    </p>
-
-    <div class="heatmap-grid">
-        @foreach (var sensorId in _rows)
-        {
-            <div class="heatmap-row">
-                <span class="row-label">@sensorId</span>
-                <div class="cell-track">
-                    @foreach (var cell in _cellsBySensor[sensorId])
-                    {
-                        <div class="heat-cell @ColourClass(cell.Colour)"
-                             title="@($"{cell.Value:0.0} (score {cell.Score})")"></div>
-                    }
-                </div>
-            </div>
-        }
+<section class="card heatmap-card">
+    <div class="card-header">
+        <h3>Anomaly Heat Map</h3>
+        <div class="legend">
+            <span class="legend-item"><i class="swatch grey"></i>Normal</span>
+            <span class="legend-item"><i class="swatch red"></i>Anomaly</span>
+            <span class="legend-item"><i class="swatch green"></i>Recovering</span>
+            <span class="legend-item"><i class="swatch blue"></i>Disconnected</span>
+        </div>
     </div>
-</div>
+
+    @if (_rows.Count == 0)
+    {
+        <p class="empty-state">No telemetry yet — register a sensor and push a reading to see live scoring here.</p>
+    }
+    else
+    {
+        <div class="heatmap-grid">
+            @foreach (var sensorId in _rows)
+            {
+                <div class="heatmap-row">
+                    <span class="row-label">@sensorId</span>
+                    <div class="cell-track">
+                        @foreach (var cell in _cellsBySensor[sensorId])
+                        {
+                            <div class="heat-cell @ColourClass(cell.Colour)"
+                                 title="@($"{cell.Value:0.0} (score {cell.Score})")"></div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</section>
 
 @code {
     private HubConnection? _hub;

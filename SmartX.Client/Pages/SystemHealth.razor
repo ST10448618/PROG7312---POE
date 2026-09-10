@@ -1,0 +1,69 @@
+@page "/health"
+@using SmartX.Client.Models
+@using SmartX.Client.Services
+@inject SensorApiClient Api
+
+<div class="flex items-center gap-2 mb-6">
+    <h1 class="text-xl font-semibold">System Health</h1>
+    <span class="relative flex h-2 w-2">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-60"></span>
+        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+    </span>
+</div>
+
+@if (_health is not null)
+{
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="card">
+            <p class="text-sm text-slate-400 mb-2">@_health.TotalSensors+ Nodes</p>
+            <div class="w-full bg-slate-800 rounded-full h-2">
+                <div class="bg-emerald-500 h-2 rounded-full" style="width: @(_health.TotalSensors == 0 ? 0 : (_health.OnlineSensors * 100 / _health.TotalSensors))%"></div>
+            </div>
+            <p class="text-xs text-slate-500 mt-2">@_health.OnlineSensors of @_health.TotalSensors online</p>
+        </div>
+        <div class="card">
+            <p class="text-sm text-slate-400 mb-2">.NET API Layer</p>
+            <span class="@(_health.DbConnected ? "badge-emerald" : "badge-rose")">@(_health.DbConnected ? "Online" : "Degraded")</span>
+        </div>
+        <div class="card">
+            <p class="text-sm text-slate-400 mb-2">Data Ingestion</p>
+            <span class="badge-emerald">Healthy · @_health.TotalTelemetryLogs logs processed</span>
+        </div>
+        <div class="card">
+            <p class="text-sm text-slate-400 mb-2">Anomaly Engine</p>
+            <span class="@(_health.CriticalAnomaliesLast24h > 0 ? "badge-amber" : "badge-emerald")">Running · @_health.CriticalAnomaliesLast24h alerts/24h</span>
+        </div>
+    </div>
+}
+
+<div class="card">
+    <h3 class="font-medium mb-4">Incident History</h3>
+    @if (_incidents is null || _incidents.Count == 0)
+    {
+        <p class="text-sm text-slate-400">No critical incidents recorded.</p>
+    }
+    else
+    {
+        <ul class="flex flex-col gap-2">
+            @foreach (var incident in _incidents)
+            {
+                <li class="flex items-center justify-between text-sm bg-rose-950/30 border-l-2 border-rose-500 rounded-r-md px-3 py-2">
+                    <span class="font-mono">@incident.SensorId</span>
+                    <span class="text-slate-400">score @incident.Score.ToString("0.00")</span>
+                    <span class="text-slate-500">@incident.Timestamp.ToLocalTime().ToString("dd MMM HH:mm")</span>
+                </li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    private SystemHealthDto? _health;
+    private List<AnomalyLogDto>? _incidents;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _health = await Api.GetHealthSummaryAsync();
+        _incidents = await Api.GetIncidentsAsync();
+    }
+}
