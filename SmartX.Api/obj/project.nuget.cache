@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "s/bahj83G7M=",
+  "dgSpecHash": "JxbEHXZZHdo=",
   "success": true,
   "projectFilePath": "C:\\Users\\perez\\VSCodeProjects\\SmartX\\SmartX.Api\\SmartX.Api.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\perez\\.nuget\\packages\\aspnetcore.healthchecks.npgsql\\9.0.0\\aspnetcore.healthchecks.npgsql.9.0.0.nupkg.sha512",
     "C:\\Users\\perez\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\perez\\.nuget\\packages\\microsoft.aspnetcore.openapi\\10.0.12\\microsoft.aspnetcore.openapi.10.0.12.nupkg.sha512",
     "C:\\Users\\perez\\.nuget\\packages\\microsoft.build.framework\\18.0.2\\microsoft.build.framework.18.0.2.nupkg.sha512",
