@@ -33,7 +33,21 @@ var clientOrigin = builder.Configuration["ClientOrigin"] ?? "http://localhost:80
 builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
     p.WithOrigins(clientOrigin).AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
 
+builder.Services.AddSingleton<AnomalyDetectionService>();
+builder.Services.AddSingleton<TelemetryBatchStore>();
+builder.Services.AddSingleton<IFileStorageService, EncryptedFileStorageService>();
+builder.Services.AddScoped<SensorService>();
+builder.Services.AddScoped<TelemetryIngestionService>();
+builder.Services.AddScoped<DeploymentTreeService>();
+builder.Services.AddHostedService<MockTelemetrySeeder>();
+
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
