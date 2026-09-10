@@ -1,7 +1,9 @@
 using SmartX.Api.Domain.Collections;
 using SmartX.Api.Domain.ValueObjects;
 using SmartX.Api.Dtos;
+using SmartX.Api.Infrastructure.Data;
 using SmartX.Api.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace SmartX.Api.Endpoints;
 
@@ -23,7 +25,7 @@ public static class TelemetryEndpoints
         group.MapGet("/history/{sensorId}", (string sensorId, TelemetryBatchStore store) =>
             Results.Ok(store.GetOptimisedHistory(sensorId)));
 
-            group.MapGet("/recent", async (AppDbContext db) =>
+        group.MapGet("/recent", async (AppDbContext db) =>
             Results.Ok(await db.TelemetryLogs.OrderByDescending(t => t.Timestamp).Take(20).ToListAsync()));
     }
 }
