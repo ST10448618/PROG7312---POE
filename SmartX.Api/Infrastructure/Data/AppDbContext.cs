@@ -10,4 +10,19 @@ public class AppDbContext : DbContext
     public DbSet<SensorProfile> Sensors => Set<SensorProfile>();
     public DbSet<SensorFile> SensorFiles => Set<SensorFile>();
     public DbSet<TelemetryLog> TelemetryLogs => Set<TelemetryLog>();
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<SensorProfile>()
+            .HasIndex(s => s.MacAddress)
+            .IsUnique();
+
+        modelBuilder.Entity<SensorProfile>()
+            .HasMany(s => s.Files)
+            .WithOne(f => f.SensorProfile!)
+            .HasForeignKey(f => f.SensorProfileId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<TelemetryLog>()
+            .HasIndex(t => new { t.SensorId, t.Timestamp });
+    }
 }
