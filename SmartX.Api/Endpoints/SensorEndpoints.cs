@@ -33,5 +33,7 @@ public static class SensorEndpoints
             var savedPath = await storage.SaveEncryptedAsync(mac, file.FileName, stream);
             return Results.Ok(new { savedTo = savedPath, encrypted = true });
         }).DisableAntiforgery();
+
+        group.MapGet("/summary", async (SensorService sensors) => Results.Ok(await sensors.GetSummaryAsync()));
     }
 }
