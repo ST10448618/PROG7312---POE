@@ -21,7 +21,6 @@ public class DeploymentTreeService
 
         return node;
     }
-    
     public bool ValidatePath(DeploymentNode node, Queue<string> path)
     {
         if (path.Count == 0)
@@ -31,4 +30,27 @@ public class DeploymentTreeService
         var child = node.Children.FirstOrDefault(c => c.Name.Equals(next, StringComparison.OrdinalIgnoreCase));
         return child is not null && ValidatePath(child, path);
     }
+
+    public int CountNodes(DeploymentNode node) => 1 + node.Children.Sum(CountNodes);
+
+    public DeploymentNode BuildDemoTree() => new()
+    {
+        Name = "Facility A",
+        Children = new()
+        {
+            new DeploymentNode
+            {
+                Name = "Zone 1",
+                Children = new()
+                {
+                    new DeploymentNode
+                    {
+                        Name = "Sub-Zone B",
+                        Children = new() { new DeploymentNode { Name = "Rack 1", HasSensor = true } }
+                    },
+                    new DeploymentNode { Name = "Sub-Zone C", HasSensor = false }
+                }
+            }
+        }
+    };
 }
