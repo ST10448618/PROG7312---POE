@@ -21,5 +21,14 @@ public class DeploymentTreeService
 
         return node;
     }
+    
+    public bool ValidatePath(DeploymentNode node, Queue<string> path)
+    {
+        if (path.Count == 0)
+            return node.HasSensor;
 
+        var next = path.Dequeue();
+        var child = node.Children.FirstOrDefault(c => c.Name.Equals(next, StringComparison.OrdinalIgnoreCase));
+        return child is not null && ValidatePath(child, path);
+    }
 }
