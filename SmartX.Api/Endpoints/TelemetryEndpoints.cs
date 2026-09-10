@@ -22,5 +22,8 @@ public static class TelemetryEndpoints
 
         group.MapGet("/history/{sensorId}", (string sensorId, TelemetryBatchStore store) =>
             Results.Ok(store.GetOptimisedHistory(sensorId)));
+
+            group.MapGet("/recent", async (AppDbContext db) =>
+            Results.Ok(await db.TelemetryLogs.OrderByDescending(t => t.Timestamp).Take(20).ToListAsync()));
     }
 }
