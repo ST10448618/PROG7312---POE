@@ -10,6 +10,7 @@ public class AppDbContext : DbContext
     public DbSet<SensorProfile> Sensors => Set<SensorProfile>();
     public DbSet<SensorFile> SensorFiles => Set<SensorFile>();
     public DbSet<TelemetryLog> TelemetryLogs => Set<TelemetryLog>();
+    public DbSet<AnomalyLog> AnomalyLogs => Set<AnomalyLog>();
         protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<SensorProfile>()
@@ -24,5 +25,8 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<TelemetryLog>()
             .HasIndex(t => new { t.SensorId, t.Timestamp });
+
+        modelBuilder.Entity<AnomalyLog>()
+            .HasIndex(a => new { a.Severity, a.Timestamp });
     }
 }
