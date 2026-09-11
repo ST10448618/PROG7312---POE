@@ -20,6 +20,10 @@
     --rose: #fb7185;
     --rose-bg: rgba(244, 63, 94, 0.1);
     --rose-border: rgba(244, 63, 94, 0.3);
+
+    --info: #60a5fa;
+    --info-bg: rgba(96, 165, 250, 0.1);
+    --info-border: rgba(96, 165, 250, 0.3);
 }
 
 .form-field label {
@@ -215,3 +219,6 @@ a { color: inherit; }
     .row-label { width: 110px; font-size: 0.7rem; }
     .slideout { width: 100%; }
 }
+
+.swatch.info, .heat-cell.info { background: var(--info); }
+.badge-info { color: var(--info); background: var(--info-bg); border-color: var(--info-border); }
