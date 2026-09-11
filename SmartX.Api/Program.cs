@@ -28,10 +28,6 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
 builder.Services.AddHttpClient();
-builder.Services.AddScoped<IntegrationService>();
-builder.Services.AddScoped<IntegrationDispatchService>();
-builder.Services.AddScoped<AnomalyLogService>();
-builder.Services.AddSingleton<ConnectionTracker>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks()
@@ -48,6 +44,11 @@ builder.Services.AddScoped<SensorService>();
 builder.Services.AddScoped<TelemetryIngestionService>();
 builder.Services.AddScoped<DeploymentTreeService>();
 builder.Services.AddHostedService<MockTelemetrySeeder>();
+builder.Services.AddScoped<IntegrationService>();
+builder.Services.AddScoped<IntegrationDispatchService>();
+builder.Services.AddScoped<AnomalyLogService>();
+builder.Services.AddSingleton<ConnectionTracker>();
+builder.Services.AddScoped<SystemHealthService>();
 
 var app = builder.Build();
 
