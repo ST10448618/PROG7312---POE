@@ -2,7 +2,7 @@ using SmartX.Api.Domain.Collections;
 
 namespace SmartX.Api.Services;
 
-public enum AnomalyColour { Grey, Red, Green, Blue }
+public enum AnomalyColour { Green, Amber, Red, Blue }
 
 public record AnomalyResult(string SensorId, double Value, double Score, AnomalyColour Colour, DateTime Timestamp);
 
@@ -33,11 +33,12 @@ public class AnomalyDetectionService
 
         window.Add(value);
 
-        var colour = score switch
+        var absScore = Math.Abs(score);
+        var colour = absScore switch
         {
             > 2.0 => AnomalyColour.Red,
-            < -2.0 => AnomalyColour.Green,
-            _ => AnomalyColour.Grey
+            > 1.0 => AnomalyColour.Amber,
+            _ => AnomalyColour.Green
         };
 
         return new AnomalyResult(sensorId, value, Math.Round(score, 2), colour, DateTime.UtcNow);
@@ -46,7 +47,8 @@ public class AnomalyDetectionService
     public static string SeverityFor(AnomalyColour colour) => colour switch
     {
         AnomalyColour.Red => "Critical",
-        AnomalyColour.Blue => "Warning",
+        AnomalyColour.Amber => "Warning",
+        AnomalyColour.Blue => "Disconnected",
         _ => "Normal"
     };
 }
