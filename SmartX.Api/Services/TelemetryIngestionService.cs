@@ -61,4 +61,24 @@ public class TelemetryIngestionService
 
         return result;
     }
+
+    public async Task<AnomalyResult> MarkDisconnectedAsync(string sensorId)
+    {
+        var result = _anomaly.Score(sensorId, 0, sensorConnected: false);
+        var severity = AnomalyDetectionService.SeverityFor(result.Colour);
+
+        _db.AnomalyLogs.Add(new AnomalyLog
+        {
+            SensorId = sensorId,
+            Value = 0,
+            Score = 0,
+            Colour = result.Colour.ToString(),
+            Severity = severity,
+            Timestamp = result.Timestamp
+        });
+        await _db.SaveChangesAsync();
+
+        await _hub.Clients.All.SendAsync("AnomalyUpdate", result);
+        return result;
+    }
 }
