@@ -36,4 +36,10 @@ public class SensorApiClient
 
     public Task<SystemHealthDto?> GetHealthSummaryAsync() => _http.GetFromJsonAsync<SystemHealthDto>("api/system/health-summary");
     public Task<List<AnomalyLogDto>?> GetIncidentsAsync() => _http.GetFromJsonAsync<List<AnomalyLogDto>>("api/system/incidents");
+
+    public Task<(bool Success, AnomalyCellDto? Result, string? Error)> PushExtremeAsync(string sensorId, float value)
+    => PushMoistureAsync(sensorId, value);
+
+    public async Task<HttpResponseMessage> MarkDisconnectedAsync(string sensorId)
+        => await _http.PostAsync($"api/telemetry/{sensorId}/disconnect", null);
 }
