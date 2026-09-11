@@ -35,9 +35,9 @@
 <div class="card" style="margin-bottom: 1.5rem;">
     <div class="legend">
         <span class="legend-item"><i class="swatch emerald"></i>Normal</span>
-        <span class="legend-item"><i class="swatch rose"></i>Critical</span>
         <span class="legend-item"><i class="swatch amber"></i>Warning</span>
-        <span class="legend-item"><i class="swatch grey"></i>Disconnected</span>
+        <span class="legend-item"><i class="swatch rose"></i>Critical</span>
+        <span class="legend-item"><i class="swatch info"></i>Disconnected</span>
     </div>
 
     @if (_rows.Count == 0)
@@ -50,11 +50,12 @@
         {
             <div class="heatmap-row">
                 <span class="row-label">@sensorId</span>
+                <span class="badge @CategoryBadge(CategoryFor(sensorId))" style="margin-right: 0.5rem;">@CategoryFor(sensorId)</span>
                 <div class="cell-track">
                     @foreach (var cell in _cellsBySensor[sensorId])
                     {
                         <div class="heat-cell @CellColour(cell.Colour)" @onclick="() => SelectSensor(sensorId)"
-                             title="@($"{cell.Value:0.0} (score {cell.Score:0.00})")"></div>
+                            title="@($"{cell.Value:0.0} (score {cell.Score:0.00})")"></div>
                     }
                 </div>
             </div>
@@ -229,13 +230,23 @@
         _history = await Api.GetSensorHistoryAsync(sensorId);
     }
 
-    private static string CellColour(string colour) => colour.ToLower() switch
+    private static string CellColour(string colour) => colour.ToLowerInvariant() switch
     {
         "red" => "rose",
-        "green" => "emerald",
-        "blue" => "amber",
-        _ => "grey"
+        "amber" => "amber",
+        "blue" => "info",
+        _ => "emerald"
     };
 
+    private string CategoryFor(string mac) =>
+        _sensors.FirstOrDefault(s => s.MacAddress == mac)?.Category ?? "Unknown";
+
+    private static string CategoryBadge(string category) => category switch
+    {
+        "Environmental" => "badge-info",
+        "Power Consumption" => "badge-amber",
+        "Actuator" => "badge-emerald",
+        _ => "badge-slate"
+    };
     public async ValueTask DisposeAsync() { if (_hub is not null) await _hub.DisposeAsync(); }
 }
