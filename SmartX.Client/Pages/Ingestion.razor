@@ -133,6 +133,15 @@
     </section>
 </div>
 
+<section class="card" style="margin-top: 1.5rem;">
+    <h3 style="margin-bottom: 1rem;">Power Aggregation Demo (Operator Overloading)</h3>
+    <button class="btn-secondary" @onclick="RunAggregateDemo">Aggregate MeterA (120W) + MeterB (80W)</button>
+    @if (_aggregateResult is not null)
+    {
+        <p class="status-message ok">Result: @_aggregateResult</p>
+    }
+</section>
+
 <div class="card" style="margin-top: 1.5rem;">
     <div class="title-with-dot" style="margin-bottom: 1rem;">
         <h3>Live Events Stream</h3>
@@ -277,4 +286,12 @@ private async Task SimulateReading(string mac)
     private record ValidationResult(string path, bool isValid);
 
     public async ValueTask DisposeAsync() { if (_hub is not null) await _hub.DisposeAsync(); }
+
+    private string? _aggregateResult;
+
+    private async Task RunAggregateDemo()
+    {
+        var response = await Api.AggregatePowerAsync(120, 80);
+        _aggregateResult = await response.Content.ReadAsStringAsync();
+    }
 }

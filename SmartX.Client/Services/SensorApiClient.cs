@@ -42,4 +42,27 @@ public class SensorApiClient
 
     public async Task<HttpResponseMessage> MarkDisconnectedAsync(string sensorId)
         => await _http.PostAsync($"api/telemetry/{sensorId}/disconnect", null);
+
+    public async Task<(bool Success, string? Message)> PushPowerAsync(string sensorId, int value)
+{
+    var response = await _http.PostAsJsonAsync("api/telemetry/power", new { sensorId, value });
+    return response.IsSuccessStatusCode
+        ? (true, await response.Content.ReadAsStringAsync())
+        : (false, await response.Content.ReadAsStringAsync());
+}
+
+public async Task<(bool Success, string? Message)> PushValveAsync(string sensorId, bool value)
+{
+    var response = await _http.PostAsJsonAsync("api/telemetry/valve", new { sensorId, value });
+    return response.IsSuccessStatusCode
+        ? (true, await response.Content.ReadAsStringAsync())
+        : (false, await response.Content.ReadAsStringAsync());
+}
+
+public Task<HttpResponseMessage> AggregatePowerAsync(double wattsA, double wattsB) =>
+    _http.PostAsJsonAsync("api/power/aggregate", new
+    {
+        a = new { deviceId = "MeterA", watts = wattsA },
+        b = new { deviceId = "MeterB", watts = wattsB }
+    });
 }
