@@ -10,10 +10,11 @@
 <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem;">
     <input @bind="_search" @bind:event="oninput" placeholder="Search sensor ID…"
            style="flex: 1; background: var(--panel); border: 1px solid var(--line); color: var(--text); padding: 0.55rem; border-radius: 6px;" />
-    <select @bind="_severity" style="background: var(--panel); border: 1px solid var(--line); color: var(--text); padding: 0.55rem; border-radius: 6px;">
+    <select @bind="_severity">
         <option value="All">All severities</option>
         <option value="Critical">Critical</option>
         <option value="Warning">Warning</option>
+        <option value="Disconnected">Disconnected</option>
         <option value="Normal">Normal</option>
     </select>
     <button class="btn-secondary" @onclick="Load">Filter</button>
@@ -87,6 +88,7 @@
     {
         "Critical" => "badge-rose",
         "Warning" => "badge-amber",
+        "Disconnected" => "badge-info",
         _ => "badge-emerald"
     };
 }
