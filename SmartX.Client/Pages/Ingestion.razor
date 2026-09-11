@@ -94,7 +94,7 @@
         {
             <table class="data-table">
                 <thead>
-                    <tr><th>MAC</th><th>Location</th><th>Status</th><th>Attach</th><th>Simulate</th></tr>
+                    <tr><th>MAC</th><th>Location</th><th>Category</th><th>Status</th><th>Attach</th><th>Simulate</th></tr>
                 </thead>
                 <tbody>
                     @foreach (var s in _sensors)
@@ -102,6 +102,7 @@
                         <tr>
                             <td class="mono">@s.MacAddress</td>
                             <td style="color: var(--text-dim);">@s.Location</td>
+                            <td><span class="badge @CategoryBadge(s.Category)">@s.Category</span></td>
                             <td><span class="badge badge-emerald">@s.Status</span></td>
                             <td><InputFile OnChange="e => UploadFile(e, s.MacAddress)" style="font-size: 0.78rem;" /></td>
                             <td>
@@ -109,6 +110,20 @@
                                 <button class="btn-secondary btn-sm" @onclick="() => SimulateSpike(s.MacAddress)">Spike</button>
                                 <button class="btn-secondary btn-sm" @onclick="() => SimulateDrop(s.MacAddress)">Drop</button>
                                 <button class="btn-secondary btn-sm" @onclick="() => SimulateDisconnect(s.MacAddress)">Disconnect</button>
+                                @if (_rowResults.TryGetValue(s.MacAddress, out var row))
+                                {
+                                    @if (row.Ok)
+                                    {
+                                        <div class="telemetry-result">
+                                            <span class="badge @ColourBadge(row.Cell!.Colour)">@row.Cell.Colour</span>
+                                            <span class="telemetry-detail">@row.Cell.Value.ToString("0.0") · score @row.Cell.Score.ToString("0.00")</span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="row-message error">@row.Error</span>
+                                    }
+                                }
                             </td>
                         </tr>
                     }
@@ -148,9 +163,6 @@
     private readonly List<string> _liveEvents = new();
     private HubConnection? _hub;
     private string? _loadError;
-    private async Task SimulateSpike(string mac) { await Api.PushExtremeAsync(mac, 900f); await RefreshAll(); }
-    private async Task SimulateDrop(string mac) { await Api.PushExtremeAsync(mac, -900f); await RefreshAll(); }
-    private async Task SimulateDisconnect(string mac) { await Api.MarkDisconnectedAsync(mac); await RefreshAll(); }
 
     protected override async Task OnInitializedAsync()
     {
@@ -200,12 +212,60 @@
         await Api.UploadFileAsync(mac, content);
     }
 
-    private async Task SimulateReading(string mac)
+private readonly Dictionary<string, (bool Ok, AnomalyCellDto? Cell, string? Error)> _rowResults = new();
+
+private async Task SimulateReading(string mac)
+{
+    var value = (float)Math.Round(_rnd.NextDouble() * 100, 2);
+    var (success, cell, error) = await Api.PushMoistureAsync(mac, value);
+    _rowResults[mac] = (success, cell, error);
+    await RefreshAll();
+}
+
+    private async Task SimulateSpike(string mac)
     {
-        var value = (float)Math.Round(_rnd.NextDouble() * 100, 2);
-        await Api.PushMoistureAsync(mac, value);
+        var (success, cell, error) = await Api.PushMoistureAsync(mac, 900f);
+        _rowResults[mac] = (success, cell, error);
         await RefreshAll();
     }
+
+    private async Task SimulateDrop(string mac)
+    {
+        var (success, cell, error) = await Api.PushMoistureAsync(mac, -900f);
+        _rowResults[mac] = (success, cell, error);
+        await RefreshAll();
+    }
+
+    private async Task SimulateDisconnect(string mac)
+    {
+        var response = await Api.MarkDisconnectedAsync(mac);
+        if (response.IsSuccessStatusCode)
+        {
+            var cell = await response.Content.ReadFromJsonAsync<AnomalyCellDto>();
+            _rowResults[mac] = (true, cell, null);
+        }
+        else
+        {
+            _rowResults[mac] = (false, null, await response.Content.ReadAsStringAsync());
+        }
+        await RefreshAll();
+    }
+
+    private static string ColourBadge(string colour) => colour.ToLowerInvariant() switch
+    {
+        "red" => "badge-rose",
+        "amber" => "badge-amber",
+        "blue" => "badge-info",
+        _ => "badge-emerald"
+    };
+
+    private static string CategoryBadge(string category) => category switch
+    {
+        "Environmental" => "badge-info",
+        "Power Consumption" => "badge-amber",
+        "Actuator" => "badge-emerald",
+        _ => "badge-slate"
+    };
 
     private async Task ValidatePath()
     {
