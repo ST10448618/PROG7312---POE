@@ -16,30 +16,75 @@
     <div class="alert-banner">@_loadError</div>
 }
 
-<div class="pipeline-grid">
-    <div class="pipeline-stage">
-        <p>ESP32 Sensors</p>
-        <p class="pipeline-metric">@(_summary?.TotalSensors ?? 0)</p>
-        <span class="badge badge-emerald">Healthy</span>
-    </div>
-    <div class="pipeline-stage">
-        <p>.NET API Layer</p>
-        <p class="pipeline-metric">@(_health?.DbConnected == true ? "Online" : "Degraded")</p>
-        <span class="badge @(_health?.DbConnected == true ? "badge-emerald" : "badge-rose")">@(_health?.DbConnected == true ? "Healthy" : "Error")</span>
-    </div>
-    <div class="pipeline-stage">
-        <p>Ingestion Gateway</p>
-        <p class="pipeline-metric">@(_summary?.TotalTelemetryLogs ?? 0) events</p>
-        <span class="badge badge-emerald">Healthy</span>
-    </div>
-    <div class="pipeline-stage">
-        <p>Anomaly Engine</p>
-        <p class="pipeline-metric">@(_health?.CriticalAnomaliesLast24h ?? 0) alerts/24h</p>
-        <span class="badge badge-emerald">Running</span>
+<div style="display: flex; gap: 1.5rem; align-items: flex-start; margin-bottom: 1.5rem;">
+    <section class="card" style="max-width: 480px; flex-shrink: 0;">
+        <h3 style="margin-bottom: 1rem;">Register a sensor</h3>
+        <EditForm Model="_newSensor" OnValidSubmit="RegisterSensor">
+            <div class="form-field">
+                <label>MAC Address</label>
+                <InputText @bind-Value="_newSensor.MacAddress" placeholder="AA:BB:CC:00:11:22" />
+            </div>
+            <div class="form-field">
+                <label>Deployment Location</label>
+                <InputText @bind-Value="_newSensor.Location" placeholder="Facility A/Zone 1/Sub-Zone B/Rack 1" />
+            </div>
+            <div class="form-field">
+                <label>Category</label>
+                <InputSelect @bind-Value="_newSensor.Category">
+                    <option value="">Select…</option>
+                    <option value="Environmental">Environmental</option>
+                    <option value="Power Consumption">Power Consumption</option>
+                    <option value="Actuator">Actuator</option>
+                </InputSelect>
+            </div>
+            <button type="submit" class="btn-primary" style="width: 100%;">Register sensor</button>
+        </EditForm>
+        @if (!string.IsNullOrEmpty(_statusMessage))
+        {
+            <p class="status-message @(_statusOk ? "ok" : "error")">@_statusMessage</p>
+        }
+
+        <hr style="border: none; border-top: 1px solid var(--line); margin: 1.25rem 0;" />
+
+        <h3 style="margin-bottom: 0.5rem;">Deployment path validator</h3>
+        <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.75rem;">Recursively validates a facility hierarchy path.</p>
+        <div style="display: flex; gap: 0.5rem;">
+            <input @bind="_pathToValidate" placeholder="Facility A/Zone 1/Sub-Zone B/Rack 1"
+                   style="flex: 1; background: var(--bg); border: 1px solid var(--line); color: var(--text); padding: 0.5rem; border-radius: 6px;" />
+            <button class="btn-secondary" @onclick="ValidatePath">Validate</button>
+        </div>
+        @if (_pathResult is not null)
+        {
+            <p class="status-message @(_pathResult == true ? "ok" : "error")">
+                @(_pathResult == true ? "Path is valid." : "Path could not be resolved.")
+            </p>
+        }
+    </section>
+
+    <div class="pipeline-grid-2x2">
+        <div class="pipeline-stage">
+            <p>ESP32 Sensors</p>
+            <p class="pipeline-metric">@(_summary?.TotalSensors ?? 0)</p>
+            <span class="badge badge-emerald">Healthy</span>
+        </div>
+        <div class="pipeline-stage">
+            <p>.NET API Layer</p>
+            <p class="pipeline-metric">@(_health?.DbConnected == true ? "Online" : "Degraded")</p>
+            <span class="badge @(_health?.DbConnected == true ? "badge-emerald" : "badge-rose")">@(_health?.DbConnected == true ? "Healthy" : "Error")</span>
+        </div>
+        <div class="pipeline-stage">
+            <p>Ingestion Gateway</p>
+            <p class="pipeline-metric">@(_summary?.TotalTelemetryLogs ?? 0) events</p>
+            <span class="badge badge-emerald">Healthy</span>
+        </div>
+        <div class="pipeline-stage">
+            <p>Anomaly Engine</p>
+            <p class="pipeline-metric">@(_health?.CriticalAnomaliesLast24h ?? 0) alerts/24h</p>
+            <span class="badge badge-emerald">Running</span>
+        </div>
     </div>
 </div>
 
-<div class="three-col">
 <section class="card">
     <h3 style="margin-bottom: 1rem;">Registered sensors</h3>
     @if (_sensors.Count == 0)
@@ -48,7 +93,7 @@
     }
     else
     {
-        <table class="data-table">
+        <table class="data-table sensor-table">
             <thead>
                 <tr><th>MAC</th><th>Location</th><th>Category</th><th>Status</th><th></th></tr>
             </thead>
@@ -125,7 +170,6 @@
         </div>
     </div>
 }
-</div>
 
 <section class="card" style="margin-top: 1.5rem;">
     <h3 style="margin-bottom: 1rem;">Power Aggregation (Operator Overloading)</h3>
@@ -185,21 +229,29 @@
     private double _wattsA = 120;
     private double _wattsB = 80;
     private string? _aggregateResult;
+    private readonly Dictionary<string, (bool Ok, AnomalyCellDto? Cell, string? Error)> _rowResults = new();
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
             await RefreshAll();
-           _hub = new HubConnectionBuilder()
-            .WithUrl($"{Config.BaseUrl}/hubs/telemetry")
-            .WithAutomaticReconnect()
-            .Build();
+            _hub = new HubConnectionBuilder()
+                .WithUrl($"{Config.BaseUrl}/hubs/telemetry")
+                .WithAutomaticReconnect()
+                .Build();
             _hub.On<object>("TelemetryIngested", async evt =>
             {
-                _liveEvents.Insert(0, evt.ToString() ?? "");
-                if (_liveEvents.Count > 15) _liveEvents.RemoveAt(_liveEvents.Count - 1);
-                await InvokeAsync(StateHasChanged);
+                try
+                {
+                    _liveEvents.Insert(0, evt.ToString() ?? "");
+                    if (_liveEvents.Count > 15) _liveEvents.RemoveAt(_liveEvents.Count - 1);
+                    await InvokeAsync(StateHasChanged);
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"TelemetryIngested handler failed: {ex}");
+                }
             });
             await _hub.StartAsync();
         }
@@ -234,15 +286,13 @@
         await Api.UploadFileAsync(mac, content);
     }
 
-private readonly Dictionary<string, (bool Ok, AnomalyCellDto? Cell, string? Error)> _rowResults = new();
-
-private async Task SimulateReading(string mac)
-{
-    var value = (float)Math.Round(_rnd.NextDouble() * 100, 2);
-    var (success, cell, error) = await Api.PushMoistureAsync(mac, value);
-    _rowResults[mac] = (success, cell, error);
-    await RefreshAll();
-}
+    private async Task SimulateReading(string mac)
+    {
+        var value = (float)Math.Round(_rnd.NextDouble() * 100, 2);
+        var (success, cell, error) = await Api.PushMoistureAsync(mac, value);
+        _rowResults[mac] = (success, cell, error);
+        await RefreshAll();
+    }
 
     private async Task SimulateSpike(string mac)
     {
@@ -273,7 +323,6 @@ private async Task SimulateReading(string mac)
         await RefreshAll();
     }
 
-
     private async Task ValidatePath()
     {
         var result = await Api.ValidatePathAsync(_pathToValidate);
@@ -283,9 +332,7 @@ private async Task SimulateReading(string mac)
 
     private record ValidationResult(string path, bool isValid);
 
-    public async ValueTask DisposeAsync() { if (_hub is not null) await _hub.DisposeAsync(); }
-
-        private void OpenManageModal(SensorDto sensor)
+    private void OpenManageModal(SensorDto sensor)
     {
         _managingSensor = sensor;
         _editLocation = sensor.Location;
@@ -298,8 +345,9 @@ private async Task SimulateReading(string mac)
     {
         if (_managingSensor is null) return;
         await Api.UpdateSensorAsync(_managingSensor.MacAddress, _editLocation, _editCategory);
+        var mac = _managingSensor.MacAddress;
         await RefreshAll();
-        _managingSensor = _sensors.FirstOrDefault(s => s.MacAddress == _managingSensor.MacAddress);
+        _managingSensor = _sensors.FirstOrDefault(s => s.MacAddress == mac);
     }
 
     private async Task DeleteSensor()
@@ -327,8 +375,14 @@ private async Task SimulateReading(string mac)
     };
 
     private async Task RunAggregateDemo()
-{
-    var response = await Api.AggregatePowerAsync(_wattsA, _wattsB);
-    _aggregateResult = await response.Content.ReadAsStringAsync();
-}
+    {
+        var response = await Api.AggregatePowerAsync(_wattsA, _wattsB);
+        _aggregateResult = await response.Content.ReadAsStringAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try { if (_hub is not null) await _hub.DisposeAsync(); }
+        catch { /* connection may never have fully established; safe to ignore on teardown */ }
+    }
 }

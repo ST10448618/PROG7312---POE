@@ -248,5 +248,9 @@
         "Actuator" => "badge-emerald",
         _ => "badge-slate"
     };
-    public async ValueTask DisposeAsync() { if (_hub is not null) await _hub.DisposeAsync(); }
+    public async ValueTask DisposeAsync()
+{
+    try { if (_hub is not null) await _hub.DisposeAsync(); }
+    catch { /* connection may never have fully established; safe to ignore on teardown */ }
+}
 }

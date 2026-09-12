@@ -75,7 +75,9 @@
                             <span class="pulse-dot"><span class="ping pulse-slow"></span><span class="core"></span></span>
                         }
                         <span class="mono">@item.SensorId</span>
-                        <span style="color: var(--text-dim);">sent @item.RawValue@item.Unit</span>
+                        <span style="color: var(--text-dim);">
+                            sent @($"{item.RawValue}{item.Unit}")
+                        </span>
                     </span>
                     <span style="color: var(--text-faint);">@item.Timestamp.ToLocalTime().ToString("HH:mm:ss")</span>
                 </div>

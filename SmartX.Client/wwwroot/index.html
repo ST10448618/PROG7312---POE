@@ -29,6 +29,25 @@
         <span class="dismiss">🗙</span>
     </div>
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
+
+    <script>
+  (function () {
+    var errorUi = document.getElementById('blazor-error-ui');
+    if (!errorUi) return;
+
+    var alreadyRetried = sessionStorage.getItem('smartx-boot-retry') === '1';
+
+    var observer = new MutationObserver(function () {
+      var isVisible = errorUi.style.display !== 'none' && errorUi.style.display !== '';
+      if (isVisible && !alreadyRetried) {
+        sessionStorage.setItem('smartx-boot-retry', '1');
+        location.reload();
+      }
+    });
+
+    observer.observe(errorUi, { attributes: true, attributeFilter: ['style'] });
+  })();
+</script>
 </body>
 
 </html>

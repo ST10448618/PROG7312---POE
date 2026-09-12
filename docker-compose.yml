@@ -27,6 +27,7 @@ services:
     environment:
       ConnectionStrings__Default: "Host=db;Port=5432;Database=smartx;Username=smartx;Password=smartx_dev"
       ClientOrigin: "http://localhost:8081"
+      ASPNETCORE_ENVIRONMENT: "Development"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 5s

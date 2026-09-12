@@ -19,6 +19,21 @@
     </header>
 
     <main class="content">
-        @Body
+        <ErrorBoundary @ref="_errorBoundary">
+            <ChildContent>
+                @Body
+            </ChildContent>
+            <ErrorContent>
+                <div class="alert-banner" style="justify-content: space-between;">
+                    <span>Something went wrong loading this page.</span>
+                    <button class="btn-secondary btn-sm" @onclick="Recover">Try again</button>
+                </div>
+            </ErrorContent>
+        </ErrorBoundary>
     </main>
 </div>
+
+@code {
+    private ErrorBoundary? _errorBoundary;
+    private void Recover() => _errorBoundary?.Recover();
+}
