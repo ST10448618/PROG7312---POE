@@ -49,6 +49,7 @@ builder.Services.AddScoped<IntegrationDispatchService>();
 builder.Services.AddScoped<AnomalyLogService>();
 builder.Services.AddSingleton<ConnectionTracker>();
 builder.Services.AddScoped<SystemHealthService>();
+builder.Services.AddHostedService<AutoTelemetrySimulator>();
 
 var app = builder.Build();
 
