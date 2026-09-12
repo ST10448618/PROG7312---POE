@@ -35,5 +35,14 @@ public static class SensorEndpoints
         }).DisableAntiforgery();
 
         group.MapGet("/summary", async (SensorService sensors) => Results.Ok(await sensors.GetSummaryAsync()));
+
+        group.MapPut("/{mac}", async (string mac, UpdateSensorRequest req, SensorService sensors) =>
+        Results.Ok(await sensors.UpdateAsync(mac, req.Location, req.Category)));
+
+        group.MapDelete("/{mac}", async (string mac, SensorService sensors) =>
+        {
+            await sensors.DeleteAsync(mac);
+            return Results.NoContent();
+        });
     }
 }

@@ -48,4 +48,22 @@ public class SensorService
         byCategory = sensors.GroupBy(s => s.Category).ToDictionary(g => g.Key, g => g.Count())
     };
 }
+
+public async Task<SensorProfile> UpdateAsync(string mac, string location, string category)
+{
+    var sensor = await _db.Sensors.FirstOrDefaultAsync(s => s.MacAddress == mac)
+        ?? throw new KeyNotFoundException($"Sensor '{mac}' not found.");
+    sensor.Location = location;
+    sensor.Category = category;
+    await _db.SaveChangesAsync();
+    return sensor;
+}
+
+public async Task DeleteAsync(string mac)
+{
+    var sensor = await _db.Sensors.FirstOrDefaultAsync(s => s.MacAddress == mac)
+        ?? throw new KeyNotFoundException($"Sensor '{mac}' not found.");
+    _db.Sensors.Remove(sensor);
+    await _db.SaveChangesAsync();
+}
 }
