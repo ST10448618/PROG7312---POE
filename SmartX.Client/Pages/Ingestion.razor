@@ -40,102 +40,109 @@
 </div>
 
 <div class="three-col">
-    <section class="card">
-        <h3 style="margin-bottom: 1rem;">Register a sensor</h3>
-        <EditForm Model="_newSensor" OnValidSubmit="RegisterSensor">
-            <div class="form-field">
-                <label>MAC Address</label>
-                <InputText @bind-Value="_newSensor.MacAddress" placeholder="AA:BB:CC:00:11:22" />
+<section class="card">
+    <h3 style="margin-bottom: 1rem;">Registered sensors</h3>
+    @if (_sensors.Count == 0)
+    {
+        <p class="empty-state">No sensors registered yet.</p>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+                <tr><th>MAC</th><th>Location</th><th>Category</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var s in _sensors)
+                {
+                    <tr>
+                        <td class="mono">@s.MacAddress</td>
+                        <td style="color: var(--text-dim);">@s.Location</td>
+                        <td><span class="badge @CategoryBadge(s.Category)">@s.Category</span></td>
+                        <td><span class="badge badge-emerald">@s.Status</span></td>
+                        <td><button class="btn-secondary btn-sm" @onclick="() => OpenManageModal(s)">Manage</button></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>
+
+@if (_managingSensor is not null)
+{
+    <div class="modal-backdrop">
+        <div class="card modal-box" style="width: 460px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 class="mono">@_managingSensor.MacAddress</h3>
+                <button class="slideout-close" @onclick="CloseManageModal">✕</button>
             </div>
+
             <div class="form-field">
-                <label>Deployment Location</label>
-                <InputText @bind-Value="_newSensor.Location" placeholder="Facility A/Zone 1/Sub-Zone B/Rack 1" />
+                <label>Location</label>
+                <input @bind="_editLocation" />
             </div>
             <div class="form-field">
                 <label>Category</label>
-                <InputSelect @bind-Value="_newSensor.Category">
-                    <option value="">Select…</option>
+                <select @bind="_editCategory">
                     <option value="Environmental">Environmental</option>
                     <option value="Power Consumption">Power Consumption</option>
                     <option value="Actuator">Actuator</option>
-                </InputSelect>
+                </select>
             </div>
-            <button type="submit" class="btn-primary" style="width: 100%;">Register sensor</button>
-        </EditForm>
-        @if (!string.IsNullOrEmpty(_statusMessage))
-        {
-            <p class="status-message @(_statusOk ? "ok" : "error")">@_statusMessage</p>
-        }
+            <button class="btn-primary" style="width: 100%; margin-bottom: 1rem;" @onclick="SaveSensorEdit">Save changes</button>
 
-        <hr style="border: none; border-top: 1px solid var(--line); margin: 1.25rem 0;" />
+            <hr style="border: none; border-top: 1px solid var(--line); margin: 1rem 0;" />
 
-        <h3 style="margin-bottom: 0.5rem;">Deployment path validator</h3>
-        <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.75rem;">Recursively validates a facility hierarchy path.</p>
-        <div style="display: flex; gap: 0.5rem;">
-            <input @bind="_pathToValidate" placeholder="Facility A/Zone 1/Sub-Zone B/Rack 1"
-                   style="flex: 1; background: var(--bg); border: 1px solid var(--line); color: var(--text); padding: 0.5rem; border-radius: 6px;" />
-            <button class="btn-secondary" @onclick="ValidatePath">Validate</button>
+            <p class="stat-label" style="margin-bottom: 0.5rem;">Attach file</p>
+            <InputFile OnChange="e => UploadFile(e, _managingSensor.MacAddress)" />
+
+            <p class="stat-label" style="margin: 1rem 0 0.5rem;">Simulate telemetry</p>
+            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                <button class="btn-secondary btn-sm" @onclick="() => SimulateReading(_managingSensor.MacAddress)">Normal</button>
+                <button class="btn-secondary btn-sm" @onclick="() => SimulateSpike(_managingSensor.MacAddress)">Spike</button>
+                <button class="btn-secondary btn-sm" @onclick="() => SimulateDrop(_managingSensor.MacAddress)">Drop</button>
+                <button class="btn-secondary btn-sm" @onclick="() => SimulateDisconnect(_managingSensor.MacAddress)">Disconnect</button>
+            </div>
+            @if (_rowResults.TryGetValue(_managingSensor.MacAddress, out var row))
+            {
+                @if (row.Ok)
+                {
+                    <div class="telemetry-result" style="margin-top: 0.6rem;">
+                        <span class="badge @ColourBadge(row.Cell!.Colour)">@row.Cell.Colour</span>
+                        <span class="telemetry-detail">@row.Cell.Value.ToString("0.0") · score @row.Cell.Score.ToString("0.00")</span>
+                    </div>
+                }
+                else
+                {
+                    <span class="row-message error">@row.Error</span>
+                }
+            }
+
+            <hr style="border: none; border-top: 1px solid var(--line); margin: 1rem 0;" />
+            <button class="btn-secondary" style="width: 100%; color: var(--rose); border-color: var(--rose);" @onclick="DeleteSensor">
+                Delete sensor
+            </button>
         </div>
-        @if (_pathResult is not null)
-        {
-            <p class="status-message @(_pathResult == true ? "ok" : "error")">
-                @(_pathResult == true ? "Path is valid." : "Path could not be resolved.")
-            </p>
-        }
-    </section>
-
-    <section class="card">
-        <h3 style="margin-bottom: 1rem;">Registered sensors</h3>
-        @if (_sensors.Count == 0)
-        {
-            <p class="empty-state">No sensors registered yet.</p>
-        }
-        else
-        {
-            <table class="data-table">
-                <thead>
-                    <tr><th>MAC</th><th>Location</th><th>Category</th><th>Status</th><th>Attach</th><th>Simulate</th></tr>
-                </thead>
-                <tbody>
-                    @foreach (var s in _sensors)
-                    {
-                        <tr>
-                            <td class="mono">@s.MacAddress</td>
-                            <td style="color: var(--text-dim);">@s.Location</td>
-                            <td><span class="badge @CategoryBadge(s.Category)">@s.Category</span></td>
-                            <td><span class="badge badge-emerald">@s.Status</span></td>
-                            <td><InputFile OnChange="e => UploadFile(e, s.MacAddress)" style="font-size: 0.78rem;" /></td>
-                            <td>
-                                <button class="btn-secondary btn-sm" @onclick="() => SimulateReading(s.MacAddress)">Normal</button>
-                                <button class="btn-secondary btn-sm" @onclick="() => SimulateSpike(s.MacAddress)">Spike</button>
-                                <button class="btn-secondary btn-sm" @onclick="() => SimulateDrop(s.MacAddress)">Drop</button>
-                                <button class="btn-secondary btn-sm" @onclick="() => SimulateDisconnect(s.MacAddress)">Disconnect</button>
-                                @if (_rowResults.TryGetValue(s.MacAddress, out var row))
-                                {
-                                    @if (row.Ok)
-                                    {
-                                        <div class="telemetry-result">
-                                            <span class="badge @ColourBadge(row.Cell!.Colour)">@row.Cell.Colour</span>
-                                            <span class="telemetry-detail">@row.Cell.Value.ToString("0.0") · score @row.Cell.Score.ToString("0.00")</span>
-                                        </div>
-                                    }
-                                    else
-                                    {
-                                        <span class="row-message error">@row.Error</span>
-                                    }
-                                }
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        }
-    </section>
+    </div>
+}
 </div>
 
 <section class="card" style="margin-top: 1.5rem;">
-    <h3 style="margin-bottom: 1rem;">Power Aggregation Demo (Operator Overloading)</h3>
-    <button class="btn-secondary" @onclick="RunAggregateDemo">Aggregate MeterA (120W) + MeterB (80W)</button>
+    <h3 style="margin-bottom: 1rem;">Power Aggregation (Operator Overloading)</h3>
+    <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.75rem;">
+        Enter any two wattage readings — the API sums them using an overloaded <span class="mono">+</span> operator on <span class="mono">PowerReading</span>.
+    </p>
+    <div style="display: flex; gap: 0.75rem; align-items: flex-end;">
+        <div class="form-field" style="margin-bottom: 0;">
+            <label>Meter A (W)</label>
+            <input type="number" @bind="_wattsA" />
+        </div>
+        <div class="form-field" style="margin-bottom: 0;">
+            <label>Meter B (W)</label>
+            <input type="number" @bind="_wattsB" />
+        </div>
+        <button class="btn-primary" @onclick="RunAggregateDemo">Aggregate</button>
+    </div>
     @if (_aggregateResult is not null)
     {
         <p class="status-message ok">Result: @_aggregateResult</p>
@@ -172,6 +179,12 @@
     private readonly List<string> _liveEvents = new();
     private HubConnection? _hub;
     private string? _loadError;
+    private SensorDto? _managingSensor;
+    private string _editLocation = "";
+    private string _editCategory = "";
+    private double _wattsA = 120;
+    private double _wattsB = 80;
+    private string? _aggregateResult;
 
     protected override async Task OnInitializedAsync()
     {
@@ -260,6 +273,43 @@ private async Task SimulateReading(string mac)
         await RefreshAll();
     }
 
+
+    private async Task ValidatePath()
+    {
+        var result = await Api.ValidatePathAsync(_pathToValidate);
+        var body = await result.Content.ReadFromJsonAsync<ValidationResult>();
+        _pathResult = body?.isValid;
+    }
+
+    private record ValidationResult(string path, bool isValid);
+
+    public async ValueTask DisposeAsync() { if (_hub is not null) await _hub.DisposeAsync(); }
+
+        private void OpenManageModal(SensorDto sensor)
+    {
+        _managingSensor = sensor;
+        _editLocation = sensor.Location;
+        _editCategory = sensor.Category;
+    }
+
+    private void CloseManageModal() => _managingSensor = null;
+
+    private async Task SaveSensorEdit()
+    {
+        if (_managingSensor is null) return;
+        await Api.UpdateSensorAsync(_managingSensor.MacAddress, _editLocation, _editCategory);
+        await RefreshAll();
+        _managingSensor = _sensors.FirstOrDefault(s => s.MacAddress == _managingSensor.MacAddress);
+    }
+
+    private async Task DeleteSensor()
+    {
+        if (_managingSensor is null) return;
+        await Api.DeleteSensorAsync(_managingSensor.MacAddress);
+        _managingSensor = null;
+        await RefreshAll();
+    }
+
     private static string ColourBadge(string colour) => colour.ToLowerInvariant() switch
     {
         "red" => "badge-rose",
@@ -276,22 +326,9 @@ private async Task SimulateReading(string mac)
         _ => "badge-slate"
     };
 
-    private async Task ValidatePath()
-    {
-        var result = await Api.ValidatePathAsync(_pathToValidate);
-        var body = await result.Content.ReadFromJsonAsync<ValidationResult>();
-        _pathResult = body?.isValid;
-    }
-
-    private record ValidationResult(string path, bool isValid);
-
-    public async ValueTask DisposeAsync() { if (_hub is not null) await _hub.DisposeAsync(); }
-
-    private string? _aggregateResult;
-
     private async Task RunAggregateDemo()
-    {
-        var response = await Api.AggregatePowerAsync(120, 80);
-        _aggregateResult = await response.Content.ReadAsStringAsync();
-    }
+{
+    var response = await Api.AggregatePowerAsync(_wattsA, _wattsB);
+    _aggregateResult = await response.Content.ReadAsStringAsync();
+}
 }

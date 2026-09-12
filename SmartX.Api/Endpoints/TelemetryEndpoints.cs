@@ -27,5 +27,8 @@ public static class TelemetryEndpoints
 
         group.MapGet("/recent", async (AppDbContext db) =>
             Results.Ok(await db.TelemetryLogs.OrderByDescending(t => t.Timestamp).Take(20).ToListAsync()));
+
+        group.MapPost("/{sensorId}/disconnect", async (string sensorId, TelemetryIngestionService ingestion) =>
+            Results.Ok(await ingestion.MarkDisconnectedAsync(sensorId)));
     }
 }

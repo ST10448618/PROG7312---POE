@@ -65,4 +65,10 @@ public Task<HttpResponseMessage> AggregatePowerAsync(double wattsA, double watts
         a = new { deviceId = "MeterA", watts = wattsA },
         b = new { deviceId = "MeterB", watts = wattsB }
     });
+
+    public Task<HttpResponseMessage> UpdateSensorAsync(string mac, string location, string category) =>
+    _http.PutAsJsonAsync($"api/sensors/{mac}", new { location, category });
+
+    public Task<HttpResponseMessage> DeleteSensorAsync(string mac) =>
+        _http.DeleteAsync($"api/sensors/{mac}");
 }
