@@ -39,7 +39,7 @@
                         <td class="mono">@log.SensorId</td>
                         <td><span class="badge @SeverityBadge(log.Severity)">@log.Severity</span></td>
                         <td>
-                            <span style="display: flex; align-items: center; gap: 0.4rem;">
+                            <span style="display: flex; align-items: center; gap: 0.4rem; color: @(log.Acknowledged ? "var(--text-dim)" : "var(--amber)");">
                                 @if (!log.Acknowledged)
                                 {
                                     <span class="pulse-dot amber"><span class="ping pulse-slow"></span><span class="core"></span></span>
