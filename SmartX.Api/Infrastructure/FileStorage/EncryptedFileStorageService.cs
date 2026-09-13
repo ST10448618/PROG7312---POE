@@ -41,4 +41,17 @@ public class EncryptedFileStorageService : IFileStorageService
 
         return savePath;
     }
+
+    public Stream OpenDecryptedStream(string storedPath)
+    {
+        var fileStream = File.OpenRead(storedPath);
+        var iv = new byte[16];
+        fileStream.ReadExactly(iv, 0, iv.Length);
+
+        var aes = Aes.Create();
+        aes.Key = _key;
+        aes.IV = iv;
+
+        return new CryptoStream(fileStream, aes.CreateDecryptor(), CryptoStreamMode.Read);
+    }
 }

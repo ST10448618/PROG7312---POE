@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using SmartX.Api.Dtos;
 using SmartX.Api.Hubs;
+using SmartX.Api.Infrastructure.Data;
 using SmartX.Api.Infrastructure.FileStorage;
 using SmartX.Api.Services;
 
@@ -43,6 +45,17 @@ public static class SensorEndpoints
         {
             await sensors.DeleteAsync(mac);
             return Results.NoContent();
+        });
+
+        group.MapGet("/{mac}/files/{fileId}/download", async (string mac, int fileId, AppDbContext db, IFileStorageService storage) =>
+        {
+            var file = await db.SensorFiles
+                .Include(f => f.SensorProfile)
+                .FirstOrDefaultAsync(f => f.Id == fileId && f.SensorProfile!.MacAddress == mac)
+                ?? throw new KeyNotFoundException("File not found.");
+
+            var stream = storage.OpenDecryptedStream(file.StoredPath);
+            return Results.File(stream, "application/octet-stream", file.FileName);
         });
     }
 }
